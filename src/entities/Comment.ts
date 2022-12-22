@@ -1,7 +1,6 @@
 import { Exclude, Expose } from "class-transformer";
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   Index,
   OneToMany,
