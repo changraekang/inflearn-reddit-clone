@@ -4,9 +4,6 @@ import { User } from "../entities/User";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cookie from "cookie";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 const mapError = (errors: Object[]) => {
   return errors.reduce((prev: any, err: any) => {
@@ -73,8 +70,18 @@ const login = async (req: Request, res: Response) => {
       return res.status(401).json({ password: "비밀번호가 잘못 되었습니다." });
     }
 
+    //token을 생성 dotenv로 변수관리
     const token = jwt.sign({ username }, process.env.JWT_TOKEN);
-    res.set("Set-Cookie", cookie.serialize("token", token));
+
+    // Cookie에 저장
+    res.set(
+      "Set-Cookie",
+      cookie.serialize("token", token, {
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 1, // 하루
+        path: "/",
+      })
+    );
     console.log(token, "토큰");
     return res.json({ user, cookie });
   } catch (error) {
