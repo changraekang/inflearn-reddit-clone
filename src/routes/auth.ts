@@ -4,6 +4,16 @@ import { User } from "../entities/User";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cookie from "cookie";
+import Verification from "../entities/Verification";
+const nodemailer = require("nodemailer");
+const AWS = require("aws-sdk");
+AWS.config.loadFromPath(__dirname + "/../../aws_config.json");
+
+const transporter = nodemailer.createTransport({
+  SES: new AWS.SES({
+    apiVersion: "2010-12-01",
+  }),
+});
 
 const mapError = (errors: Object[]) => {
   return errors.reduce((prev: any, err: any) => {
@@ -11,17 +21,95 @@ const mapError = (errors: Object[]) => {
     return prev;
   }, {});
 };
+// 이메일 토큰 인증
+const token_veryfy = async (req: Request, res: Response) => {
+  const { email, token } = req.body;
+  try {
+    let errors: any = {};
+    // 비워져있다면 error를 web으로 보내기
+    console.log(errors, "validation failed");
+    const user = await Verification.findOneBy({ email });
 
+    if (token != user.identifier) {
+      return res.status(401).json({ token: "인증번호 잘못 되었습니다." });
+    }
+
+    //token을 생성 dotenv로 변수관리
+
+    console.log(token, "토큰");
+    return res.json({ user, token });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+};
+// 이메일 인증
+const email_verify = async (req: Request, res: Response) => {
+  const { email } = req.body;
+  try {
+    const emailUser = await Verification.findOneBy({ email });
+    if (emailUser) {
+      let token = emailUser.identifier;
+      transporter.sendMail(
+        {
+          from: "no-reply@lckfantasy.com",
+          to: email,
+          subject: "가입인증메일",
+          text: `Email 인증번호 "` + token + `"입니다. 입력해주세요.`,
+        },
+        (err, info) => {
+          if (err) {
+            console.log(err);
+          }
+          console.log("성공");
+          console.log(info);
+        }
+      );
+      return res.json(emailUser);
+    } else {
+      const token = String(Math.floor(Math.random() * 100000));
+      let errors: any = {};
+
+      transporter.sendMail(
+        {
+          from: "no-reply@lckfantasy.com",
+          to: email,
+          subject: "가입인증메일",
+          text: `Email 인증번호 "` + token + `"입니다. 입력해주세요.`,
+        },
+        (err, info) => {
+          if (err) {
+            console.log(err);
+          }
+          console.log("성공");
+          console.log(info);
+        }
+      );
+      const verification = new Verification();
+
+      // 엔티티에 정해 놓은 조건으로 user 데이터의 유효성 검사를 해줌.
+      if (errors.length > 0) return res.status(400).json(mapError(errors));
+      verification.email = email;
+      verification.identifier = token;
+      await verification.save();
+      return res.json(verification);
+    }
+  } catch (error) {
+    return res.status(500).json({ error });
+  }
+};
+// 회원가입
 const register = async (req: Request, res: Response) => {
-  const { email, username, password } = req.body;
+  const { email, username, password, token } = req.body;
   try {
     let errors: any = {};
     // Email과 username이 이미 사용된 것인지 확인
-
     const emailUser = await User.findOneBy({ email });
     const usernameUser = await User.findOneBy({ username });
+    const tokencheck = await Verification.findOneBy({ email });
     console.log(email, username, "요청data");
     if (emailUser) errors.email = "이미 해당 email은 사용중입니다.";
+    if (tokencheck != token) errors.token = "인증번호가 다릅니다.";
     if (usernameUser) errors.username = "이미 해당 username은 사용중입니다";
     const user = new User();
     user.email = email;
@@ -43,7 +131,7 @@ const register = async (req: Request, res: Response) => {
     return res.status(500).json({ error });
   }
 };
-
+// 로그인
 const login = async (req: Request, res: Response) => {
   console.log("login");
   const { password, username } = req.body;
@@ -92,6 +180,8 @@ const login = async (req: Request, res: Response) => {
 
 const router = Router();
 
+router.post("/email_verify", email_verify);
+router.post("/token_veryfy", token_veryfy);
 router.post("/register", register);
 router.post("/login", login);
 

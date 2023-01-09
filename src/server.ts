@@ -2,6 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import { AppDataSource } from "./data-source";
 import authRoutes from "./routes/auth";
+import subRoutes from "./routes/subs";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -14,6 +15,7 @@ dotenv.config();
 app.use(morgan("dev"));
 app.use(cors({ origin, credentials: true }));
 app.use("/auth", authRoutes);
+app.use("/subs", subRoutes);
 app.get("/", (req, res) => {
   res.send("running!");
 });

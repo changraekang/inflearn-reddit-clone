@@ -6,3 +6,4 @@ tmp/
 temp/
 src/data-source.ts
 .env
+aws_config.json

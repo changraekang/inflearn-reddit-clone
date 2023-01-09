@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import Post from "./Post";
 import Vote from "./Vote";
 import BaseEntity from "./Entity";
+import Verification from "./Verification";
 
 @Entity("users")
 export class User extends BaseEntity {
@@ -23,11 +24,17 @@ export class User extends BaseEntity {
   @Length(8, 255, { message: "비밀번호는 8자리 이상이어야 합니다." })
   password: string;
 
+  @Column({ default: 0 })
+  email_verify: number;
+
   @OneToMany(() => Post, (post) => post.user)
   posts: Post[];
 
   @OneToMany(() => Vote, (vote) => vote.user)
   votes: Vote[];
+
+  @OneToMany(() => Verification, (verification) => verification.user)
+  verifications: Verification[];
 
   @BeforeInsert()
   async hashPassword() {
