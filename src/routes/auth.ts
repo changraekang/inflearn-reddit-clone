@@ -109,7 +109,7 @@ const register = async (req: Request, res: Response) => {
     const tokencheck = await Verification.findOneBy({ email });
     console.log(email, username, "요청data");
     if (emailUser) errors.email = "이미 해당 email은 사용중입니다.";
-    if (tokencheck != token) errors.token = "인증번호가 다릅니다.";
+    if (tokencheck.identifier != token) errors.token = "인증번호가 다릅니다.";
     if (usernameUser) errors.username = "이미 해당 username은 사용중입니다";
     const user = new User();
     user.email = email;
