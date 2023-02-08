@@ -9,7 +9,7 @@ import dotenv from "dotenv";
 const app = express();
 
 app.use(express.json());
-const origin = "http://localhost:3000";
+const origin = process.env.ORIGIN;
 dotenv.config();
 
 app.use(morgan("dev"));

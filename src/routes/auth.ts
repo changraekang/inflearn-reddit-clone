@@ -55,7 +55,7 @@ const email_verify = async (req: Request, res: Response) => {
           from: "no-reply@lckfantasy.com",
           to: email,
           subject: "가입인증메일",
-          text: `Email 인증번호 "` + token + `"입니다. 입력해주세요.`,
+          text: `Email 인증번호 "` + token + `"입니다. \n입력해주세요.`,
         },
         (err, info) => {
           if (err) {
